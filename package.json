@@ -1,12 +1,31 @@
 {
   "name": "artist-hub",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "build": "bun build src/index.ts --outfile=dist/index.js --minify",
+    "dev": "bun run --hot src/index.ts",
+    "deploy": "",
+    "db:migrate:up": "tsx -r dotenv/config ./src/db/migrate latest",
+    "db:migrate:down": "tsx -r dotenv/config ./src/db/migrate down",
+    "db:migrate:redo": "tsx -r dotenv/config ./src/db/migrate redo && bun run db:generate:types",
+    "db:migrate:create": "tsx -r dotenv/config ./src/db/migrate create initial",
+    "db:seed": "tsx -r dotenv/config ./src/db/seed",
+    "db:reset": "bun run db:migrate:redo && bun run db:seed",
+    "db:generate:types": "kanel"
   },
   "dependencies": {
-    "hono": "^4.6.3"
+    "hono": "^4.6.3",
+    "kysely": "^0.27.4",
+    "kysely-migration-cli": "^0.4.2",
+    "pg": "^8.13.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/pg": "^8.11.10",
+    "dotenv": "^16.4.5",
+    "kanel": "^3.10.1",
+    "kanel-kysely": "^0.5.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
   }
 }
