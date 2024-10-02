@@ -1,4 +1,8 @@
-export async function getUsers() {}
+import { db } from "../db";
+
+export async function getAllUsers() {
+  return await db.selectFrom("user").selectAll().execute();
+}
 
 export async function getUser(id: number) {}
 

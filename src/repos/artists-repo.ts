@@ -1,4 +1,4 @@
-export async function getArtists() {}
+export async function getAllArtists() {}
 
 export async function getArtist(id: number) {}
 

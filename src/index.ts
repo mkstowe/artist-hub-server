@@ -1,11 +1,11 @@
 import { Hono } from "hono";
-import { user } from "./routes/user";
-import { artist } from "./routes/artist";
+import { users } from "./routes/users";
+import { artists } from "./routes/artists";
 
 const app = new Hono();
 
-app.route("/user", user);
-app.route("/artist", artist);
+app.route("/users", users);
+app.route("/artists", artists);
 
 app.get("/", (c) => {
   return c.text("Hello Hono!");
