@@ -5,9 +5,9 @@
     "dev": "bun run --hot src/index.ts",
     "deploy": "",
     "db:migrate:up": "tsx -r dotenv/config ./src/db/migrate latest",
-    "db:migrate:down": "tsx -r dotenv/config ./src/db/migrate down",
+    "db:migrate:down": "tsx -r dotenv/config ./src/db/migrate down-to NO_MIGRATIONS",
     "db:migrate:redo": "tsx -r dotenv/config ./src/db/migrate redo && bun run db:generate:types",
-    "db:migrate:create": "tsx -r dotenv/config ./src/db/migrate create initial",
+    "db:migrate:create": "tsx -r dotenv/config ./src/db/migrate create $1",
     "db:seed": "tsx -r dotenv/config ./src/db/seed",
     "db:reset": "bun run db:migrate:redo && bun run db:seed",
     "db:generate:types": "kanel"

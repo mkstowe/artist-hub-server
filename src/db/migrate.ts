@@ -14,4 +14,4 @@ const migrator = new Migrator({
   }),
 });
 
-run(db, migrator, "./src/lib/db/migraations");
+run(db, migrator, "./src/db/migrations");
