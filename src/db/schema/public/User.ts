@@ -15,11 +15,21 @@ export default interface UserTable {
 
   last_name: ColumnType<string, string, string>;
 
+  email: ColumnType<string, string, string>;
+
+  active: ColumnType<boolean, boolean | undefined, boolean>;
+
+  avatar_path: ColumnType<string | null, string | null, string | null>;
+
+  role: ColumnType<Role, Role | undefined, Role>;
+
+  auth_provider: ColumnType<string | null, string | null, string | null>;
+
+  last_login: ColumnType<string | null, string | null, string | null>;
+
   created_at: ColumnType<string, string | undefined, string>;
 
   updated_at: ColumnType<string, string | undefined, string>;
-
-  role: ColumnType<Role, Role | undefined, Role>;
 }
 
 export type User = Selectable<UserTable>;

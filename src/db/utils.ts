@@ -1,4 +1,5 @@
 import { RawBuilder, sql } from "kysely";
+import { supabase } from ".";
 
 export const withTimestamps = (qb: any) => {
   return qb
@@ -20,4 +21,17 @@ export function json<T>(value: T, shouldStringify = false): RawBuilder<T> {
   }
 
   return sql`CAST(${value} AS JSONB)`;
+}
+
+export async function getImage(bucket: string, path: string) {
+  const { data, error } = await supabase.storage.from(bucket).download(path);
+  return { data, error };
+}
+
+export async function uploadImage(bucket: string, path: string, fileData: any) {
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(path, fileData);
+
+  return { data, error };
 }

@@ -11,11 +11,39 @@ export type ArtistId = number & { __brand: 'ArtistId' };
 export default interface ArtistTable {
   id: ColumnType<ArtistId, ArtistId | undefined, ArtistId>;
 
+  user: ColumnType<UserId, UserId, UserId>;
+
   name: ColumnType<string, string, string>;
 
   bio: ColumnType<string | null, string | null, string | null>;
 
-  created_by: ColumnType<UserId, UserId, UserId>;
+  avatar_path: ColumnType<string | null, string | null, string | null>;
+
+  slug: ColumnType<string, string, string>;
+
+  active: ColumnType<boolean, boolean | undefined, boolean>;
+
+  city: ColumnType<string | null, string | null, string | null>;
+
+  state: ColumnType<string | null, string | null, string | null>;
+
+  instagram: ColumnType<string | null, string | null, string | null>;
+
+  twitter: ColumnType<string | null, string | null, string | null>;
+
+  facebook: ColumnType<string | null, string | null, string | null>;
+
+  website: ColumnType<string | null, string | null, string | null>;
+
+  etsy: ColumnType<string | null, string | null, string | null>;
+
+  phone: ColumnType<string | null, string | null, string | null>;
+
+  email: ColumnType<string | null, string | null, string | null>;
+
+  verified: ColumnType<boolean, boolean | undefined, boolean>;
+
+  adult: ColumnType<boolean, boolean | undefined, boolean>;
 
   created_at: ColumnType<string, string | undefined, string>;
 

@@ -13,6 +13,7 @@
     "db:generate:types": "kanel"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
     "hono": "^4.6.3",
     "kysely": "^0.27.4",
     "kysely-migration-cli": "^0.4.2",
