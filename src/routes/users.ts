@@ -66,8 +66,16 @@ users.get("/:id/avatar", async (c) => {
       return c.json(error);
     }
 
+    
+    const arrayBuffer = await data?.arrayBuffer();
+    
+    let encoded = ''
+    if (arrayBuffer) {
+      encoded = Buffer.from(arrayBuffer).toString('base64');
+    }
+    
     c.header("Content-Type", data?.type);
-    return c.json(await data?.arrayBuffer());
+    return c.json({data: encoded});
   } catch (error) {
     if (error instanceof NotFoundError) {
       c.status(404);
