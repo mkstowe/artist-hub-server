@@ -16,7 +16,7 @@ export default interface ArtistTagTable {
 
   tag: ColumnType<TagId, TagId, TagId>;
 
-  created_at: ColumnType<string, string | undefined, string>;
+  created_at: ColumnType<Date, Date | string | undefined, Date | string>;
 }
 
 export type ArtistTag = Selectable<ArtistTagTable>;

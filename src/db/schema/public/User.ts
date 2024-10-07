@@ -25,11 +25,11 @@ export default interface UserTable {
 
   auth_provider: ColumnType<string | null, string | null, string | null>;
 
-  last_login: ColumnType<string | null, string | null, string | null>;
+  last_login: ColumnType<Date | null, Date | string | null, Date | string | null>;
 
-  created_at: ColumnType<string, string | undefined, string>;
+  created_at: ColumnType<Date, Date | string | undefined, Date | string>;
 
-  updated_at: ColumnType<string, string | undefined, string>;
+  updated_at: ColumnType<Date, Date | string | undefined, Date | string>;
 }
 
 export type User = Selectable<UserTable>;

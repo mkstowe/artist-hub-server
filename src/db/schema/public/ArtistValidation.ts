@@ -21,9 +21,11 @@ export default interface ArtistValidationTable {
 
   comments: ColumnType<string | null, string | null, string | null>;
 
-  created_at: ColumnType<string, string | undefined, string>;
+  created_at: ColumnType<Date, Date | string | undefined, Date | string>;
 
-  updated_at: ColumnType<string, string | undefined, string>;
+  updated_at: ColumnType<Date, Date | string | undefined, Date | string>;
+
+  validated_at: ColumnType<Date | null, Date | string | null, Date | string | null>;
 }
 
 export type ArtistValidation = Selectable<ArtistValidationTable>;

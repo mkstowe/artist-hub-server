@@ -1,10 +1,14 @@
 import { Hono } from "hono";
 import {
+  createFavorite,
   createUser,
+  deleteFavorite,
   getAllUsers,
   getUser,
   getUserAvatar,
+  updateUserAvatar,
 } from "../repos/users-repo";
+import { NotFoundError } from "../db/utils";
 
 export const users = new Hono();
 
@@ -23,19 +27,6 @@ users.get("/:id", async (c) => {
   }
 
   return c.json(user);
-});
-
-users.get("/:id/avatar", async (c) => {
-  const id = c.req.param("id");
-  const { data, error } = await getUserAvatar(id);
-
-  if (error) {
-    c.status(500);
-    return c.json(error);
-  }
-
-  c.header("Content-Type", data?.type);
-  return c.json(await data?.arrayBuffer());
 });
 
 users.post("/", async (c) => {
@@ -62,4 +53,61 @@ users.delete("/:id", async (c) => {
     return c.json({ error: "User not found" });
   }
   return c.json({ message: "User deleted" });
+});
+
+users.get("/:id/avatar", async (c) => {
+  const id = c.req.param("id");
+
+  try {
+    const { data, error } = await getUserAvatar(id);
+
+    if (error) {
+      c.status(500);
+      return c.json(error);
+    }
+
+    c.header("Content-Type", data?.type);
+    return c.json(await data?.arrayBuffer());
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      c.status(404);
+      return c.json({ error: error.message });
+    }
+  }
+});
+
+users.post("/:id/avatar", async (c) => {
+  const id = c.req.param("id");
+  const fileData = await c.req.parseBody();
+
+  try {
+    const { data, error } = await updateUserAvatar(id, fileData);
+
+    if (error) {
+      c.status(500);
+      return c.json(error);
+    }
+
+    return c.json(data);
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      c.status(404);
+      return c.json({ error: error.message });
+    }
+  }
+});
+
+users.post("/:id/favorite/:artist", async (c) => {
+  const user: any = c.req.param("id");
+  const artist: any = +c.req.param("artist");
+
+  const favorite = await createFavorite({ user, artist });
+  return c.json(favorite);
+});
+
+users.delete("/:id/favorite/:artist", async (c) => {
+  const user: any = c.req.param("id");
+  const artist: any = +c.req.param("artist");
+  const favorite = await deleteFavorite(user, artist);
+  return c.json(favorite);
 });

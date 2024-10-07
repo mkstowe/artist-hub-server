@@ -19,9 +19,9 @@ export default interface ArtistLinkTable {
 
   index: ColumnType<number, number, number>;
 
-  created_at: ColumnType<string, string | undefined, string>;
+  created_at: ColumnType<Date, Date | string | undefined, Date | string>;
 
-  updated_at: ColumnType<string, string | undefined, string>;
+  updated_at: ColumnType<Date, Date | string | undefined, Date | string>;
 }
 
 export type ArtistLink = Selectable<ArtistLinkTable>;

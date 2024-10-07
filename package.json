@@ -6,6 +6,7 @@
     "deploy": "",
     "db:migrate:up": "tsx -r dotenv/config ./src/db/migrate latest",
     "db:migrate:down": "tsx -r dotenv/config ./src/db/migrate down-to NO_MIGRATIONS",
+    "db:migrate:down:all": "tsx -r dotenv/config ./src/db/migrate down-to NO_MIGRATIONS",
     "db:migrate:redo": "tsx -r dotenv/config ./src/db/migrate redo && bun run db:generate:types",
     "db:migrate:create": "tsx -r dotenv/config ./src/db/migrate create $1",
     "db:seed": "tsx -r dotenv/config ./src/db/seed",
@@ -18,11 +19,13 @@
     "kysely": "^0.27.4",
     "kysely-migration-cli": "^0.4.2",
     "pg": "^8.13.0",
+    "uuid": "^10.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/pg": "^8.11.10",
+    "@types/uuid": "^10.0.0",
     "dotenv": "^16.4.5",
     "kanel": "^3.10.1",
     "kanel-kysely": "^0.5.0",

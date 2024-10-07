@@ -35,3 +35,19 @@ export async function uploadImage(bucket: string, path: string, fileData: any) {
 
   return { data, error };
 }
+
+export async function updateImage(bucket: string, path: string, fileData: any) {
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .update(path, fileData, { upsert: true });
+
+  return { data, error };
+}
+
+export class NotFoundError extends Error {
+  statusCode: number;
+  constructor(message: string) {
+    super(message);
+    this.statusCode = 404; // Set the status code for not found
+  }
+}

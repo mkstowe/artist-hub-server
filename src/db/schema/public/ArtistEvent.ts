@@ -11,21 +11,21 @@ export type ArtistEventId = number & { __brand: 'ArtistEventId' };
 export default interface ArtistEventTable {
   id: ColumnType<ArtistEventId, ArtistEventId | undefined, ArtistEventId>;
 
-  aratist: ColumnType<ArtistId, ArtistId, ArtistId>;
+  artist: ColumnType<ArtistId, ArtistId, ArtistId>;
 
   title: ColumnType<string, string, string>;
 
   description: ColumnType<string | null, string | null, string | null>;
 
-  starts_at: ColumnType<string | null, string | null, string | null>;
+  starts_at: ColumnType<Date | null, Date | string | null, Date | string | null>;
 
-  ends_at: ColumnType<string | null, string | null, string | null>;
+  ends_at: ColumnType<Date | null, Date | string | null, Date | string | null>;
 
   location: ColumnType<string | null, string | null, string | null>;
 
-  created_at: ColumnType<string, string | undefined, string>;
+  created_at: ColumnType<Date, Date | string | undefined, Date | string>;
 
-  updated_at: ColumnType<string, string | undefined, string>;
+  updated_at: ColumnType<Date, Date | string | undefined, Date | string>;
 }
 
 export type ArtistEvent = Selectable<ArtistEventTable>;

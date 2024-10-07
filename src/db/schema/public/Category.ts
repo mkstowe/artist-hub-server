@@ -12,7 +12,7 @@ export default interface CategoryTable {
 
   name: ColumnType<string, string, string>;
 
-  created_at: ColumnType<string, string | undefined, string>;
+  created_at: ColumnType<Date, Date | string | undefined, Date | string>;
 }
 
 export type Category = Selectable<CategoryTable>;

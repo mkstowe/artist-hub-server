@@ -16,9 +16,9 @@ export default interface UserFavoriteTable {
 
   artist: ColumnType<ArtistId, ArtistId, ArtistId>;
 
-  created_at: ColumnType<string, string | undefined, string>;
+  created_at: ColumnType<Date, Date | string | undefined, Date | string>;
 
-  deleted_at: ColumnType<string | null, string | null, string | null>;
+  deleted_at: ColumnType<Date | null, Date | string | null, Date | string | null>;
 }
 
 export type UserFavorite = Selectable<UserFavoriteTable>;

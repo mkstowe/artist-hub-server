@@ -16,7 +16,7 @@ export default interface ArtistCategoryTable {
 
   category: ColumnType<CategoryId, CategoryId, CategoryId>;
 
-  created_at: ColumnType<string, string | undefined, string>;
+  created_at: ColumnType<Date, Date | string | undefined, Date | string>;
 }
 
 export type ArtistCategory = Selectable<ArtistCategoryTable>;
