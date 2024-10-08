@@ -1,16 +1,16 @@
 import { db } from "../db";
-import { ArtistUpdate, NewArtist } from "../db/schema/public/Artist";
-import { jsonObjectFrom } from "kysely/helpers/postgres";
+import { ArtistId, ArtistUpdate, NewArtist } from "../db/schema/public/Artist";
+import { jsonArrayFrom } from "kysely/helpers/postgres";
 
 export async function getAllArtists() {
   return await db.selectFrom("artist").selectAll().execute();
 }
 
-export async function getArtistById(id: any) {
+export async function getArtistById(id: number | ArtistId) {
   return await db
     .selectFrom("artist")
     .selectAll()
-    .where("id", "=", id)
+    .where("id", "=", id as ArtistId)
     .executeTakeFirst();
 }
 
@@ -24,32 +24,32 @@ export async function createArtist(input: NewArtist) {
     .executeTakeFirstOrThrow();
 }
 
-export async function updateArtist(id: any, input: ArtistUpdate) {
+export async function updateArtist(id: number | ArtistId, input: ArtistUpdate) {
   input.updated_at = new Date();
 
   return await db
     .updateTable("artist")
     .set(input)
-    .where("id", "=", id)
+    .where("id", "=", id as ArtistId)
     .returningAll()
     .execute();
 }
 
-export async function deleteArtist(id: any) {
+export async function deleteArtist(id: number | ArtistId) {
   return await db
     .deleteFrom("artist")
-    .where("id", "=", id)
+    .where("id", "=", id as ArtistId)
     .returningAll()
     .execute();
 }
 
-export async function getArtistProfile(id: any) {
+export async function getArtistProfile(id: number | ArtistId) {
   return await db
     .selectFrom("artist as a")
     .selectAll()
     .select((eb) => [
       "id",
-      jsonObjectFrom(
+      jsonArrayFrom(
         eb
           .selectFrom("artist_link as l")
           .selectAll()
@@ -58,7 +58,7 @@ export async function getArtistProfile(id: any) {
     ])
     .select((eb) => [
       "id",
-      jsonObjectFrom(
+      jsonArrayFrom(
         eb
           .selectFrom("artist_event as e")
           .selectAll()
@@ -67,13 +67,13 @@ export async function getArtistProfile(id: any) {
     ])
     .select((eb) => [
       "id",
-      jsonObjectFrom(
+      jsonArrayFrom(
         eb
           .selectFrom("gallery_image as i")
           .selectAll()
           .whereRef("i.artist", "=", "a.id")
       ).as("images"),
     ])
-    .where("a.id", "=", id)
+    .where("a.id", "=", id as ArtistId)
     .executeTakeFirst();
 }

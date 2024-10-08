@@ -9,6 +9,8 @@ import {
   updateUserAvatar,
 } from "../repos/users-repo";
 import { NotFoundError } from "../db/utils";
+import { UserId } from "../db/schema/public/User";
+import { ArtistId } from "../db/schema/public/Artist";
 
 export const users = new Hono();
 
@@ -18,7 +20,7 @@ users.get("/", async (c) => {
 });
 
 users.get("/:id", async (c) => {
-  const id = c.req.param("id");
+  const id = +c.req.param("id");
   const user = await getUserById(id);
 
   if (!user) {
@@ -35,7 +37,7 @@ users.post("/", async (c) => {
 });
 
 users.patch("/:id", async (c) => {
-  const id = c.req.param("id");
+  const id = +c.req.param("id");
   const user = await getUserById(id);
   if (!user) {
     c.status(404);
@@ -46,7 +48,7 @@ users.patch("/:id", async (c) => {
 });
 
 users.delete("/:id", async (c) => {
-  const id = c.req.param("id");
+  const id = +c.req.param("id");
   const user = await getUserById(id);
   if (!user) {
     c.status(404);
@@ -56,7 +58,7 @@ users.delete("/:id", async (c) => {
 });
 
 users.get("/:id/avatar", async (c) => {
-  const id = c.req.param("id");
+  const id = +c.req.param("id");
 
   try {
     const { data, error } = await getUserAvatar(id);
@@ -66,16 +68,15 @@ users.get("/:id/avatar", async (c) => {
       return c.json(error);
     }
 
-    
     const arrayBuffer = await data?.arrayBuffer();
-    
-    let encoded = ''
+
+    let encoded = "";
     if (arrayBuffer) {
-      encoded = Buffer.from(arrayBuffer).toString('base64');
+      encoded = Buffer.from(arrayBuffer).toString("base64");
     }
-    
+
     c.header("Content-Type", data?.type);
-    return c.json({data: encoded});
+    return c.json({ data: encoded });
   } catch (error) {
     if (error instanceof NotFoundError) {
       c.status(404);
@@ -85,7 +86,7 @@ users.get("/:id/avatar", async (c) => {
 });
 
 users.post("/:id/avatar", async (c) => {
-  const id = c.req.param("id");
+  const id = +c.req.param("id");
   const fileData = await c.req.parseBody();
 
   try {
@@ -106,16 +107,16 @@ users.post("/:id/avatar", async (c) => {
 });
 
 users.post("/:id/favorite/:artist", async (c) => {
-  const user: any = c.req.param("id");
-  const artist: any = +c.req.param("artist");
+  const user = +c.req.param("id") as UserId;
+  const artist = +c.req.param("artist") as ArtistId;
 
   const favorite = await createFavorite({ user, artist });
   return c.json(favorite);
 });
 
 users.delete("/:id/favorite/:artist", async (c) => {
-  const user: any = c.req.param("id");
-  const artist: any = +c.req.param("artist");
+  const user = +c.req.param("id");
+  const artist = +c.req.param("artist");
   const favorite = await deleteFavorite(user, artist);
   return c.json(favorite);
 });

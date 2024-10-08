@@ -1,5 +1,6 @@
 import { db } from "../db";
-import { NewUser, UserUpdate } from "../db/schema/public/User";
+import { ArtistId } from "../db/schema/public/Artist";
+import { NewUser, UserId, UserUpdate } from "../db/schema/public/User";
 import { NewUserFavorite } from "../db/schema/public/UserFavorite";
 import { getImage, NotFoundError, updateImage } from "../db/utils";
 import { v4 as uuid } from "uuid";
@@ -8,19 +9,19 @@ export async function getAllUsers() {
   return await db.selectFrom("user").selectAll().execute();
 }
 
-export async function getUserById(id: any) {
+export async function getUserById(id: number | UserId) {
   return await db
     .selectFrom("user")
     .selectAll()
-    .where("id", "=", id)
+    .where("id", "=", id as UserId)
     .executeTakeFirst();
 }
 
-export async function getUserAvatar(id: any) {
+export async function getUserAvatar(id: number | UserId) {
   const user = await db
     .selectFrom("user")
     .select("avatar_path")
-    .where("id", "=", id)
+    .where("id", "=", id as UserId)
     .executeTakeFirst();
 
   if (!user) {
@@ -30,11 +31,11 @@ export async function getUserAvatar(id: any) {
   return getImage("user-avatars", user?.avatar_path || "demo.jpg");
 }
 
-export async function updateUserAvatar(id: any, data: any) {
+export async function updateUserAvatar(id: number | UserId, data: any) {
   const user = await db
     .selectFrom("user")
     .select("avatar_path")
-    .where("id", "=", id)
+    .where("id", "=", id as UserId)
     .executeTakeFirst();
 
   if (!user) {
@@ -56,21 +57,21 @@ export async function createUser(input: NewUser) {
     .executeTakeFirstOrThrow();
 }
 
-export async function updateUser(id: any, input: UserUpdate) {
+export async function updateUser(id: number | UserId, input: UserUpdate) {
   input.updated_at = new Date();
 
   return await db
     .updateTable("user")
     .set(input)
-    .where("id", "=", id)
+    .where("id", "=", id as UserId)
     .returningAll()
     .execute();
 }
 
-export async function deleteUser(id: any) {
+export async function deleteUser(id: number | UserId) {
   return await db
     .deleteFrom("user")
-    .where("id", "=", id)
+    .where("id", "=", id as UserId)
     .returningAll()
     .executeTakeFirst();
 }
@@ -83,11 +84,14 @@ export async function createFavorite(input: NewUserFavorite) {
     .executeTakeFirstOrThrow();
 }
 
-export async function deleteFavorite(user: any, artist: any) {
+export async function deleteFavorite(
+  user: number | UserId,
+  artist: number | ArtistId
+) {
   return await db
     .deleteFrom("user_favorite")
-    .where("user", "=", user)
-    .where("artist", "=", artist)
+    .where("user", "=", user as UserId)
+    .where("artist", "=", artist as ArtistId)
     .returningAll()
     .executeTakeFirst();
 }
