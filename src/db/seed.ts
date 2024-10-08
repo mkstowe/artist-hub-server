@@ -103,7 +103,10 @@ export async function generateArtists(iterations: number) {
       name: faker.company.name(),
       avatar_path: getRandomElement(artistAvatarPaths),
       bio: faker.company.catchPhrase(),
-      slug: faker.color.human() + "-" + faker.animal.type(),
+      slug: (faker.color.human() + "-" + faker.animal.type()).replaceAll(
+        " ",
+        "-"
+      ),
       city: faker.location.city(),
       state: faker.location.state(),
       phone: faker.phone.number(),
@@ -179,17 +182,26 @@ export async function generateArtists(iterations: number) {
     // validate
     const validation: NewArtistValidation = {
       artist: newArtist.id as ArtistId,
-      admin: Math.floor(Math.random() * users.length) as UserId,
+      admin: 1 as UserId,
       status:
-        Math.random() < 0.5
+        Math.random() < 0.8
           ? ValidationStatus.approved
-          : Math.random() < 0.5
+          : Math.random() < 0.75
           ? ValidationStatus.pending
           : ValidationStatus.rejected,
       comments: faker.lorem.sentence(),
     };
     validations.push(validation);
     await db.insertInto("artist_validation").values(validation).execute();
+
+    await db
+      .updateTable("artist")
+      .set({
+        verified: validation.status === ValidationStatus.approved,
+        validation_status: validation.status,
+      })
+      .where("id", "=", newArtist.id)
+      .execute();
   }
 }
 
@@ -202,7 +214,7 @@ export async function generateFavorites() {
         user: u.id,
         artist: a.id,
       };
-      
+
       if (Math.random() < 0.5) {
         userFavorites.push(favorite);
       }
@@ -214,7 +226,7 @@ export async function generateFavorites() {
 
 export async function seed() {
   const numUsers = 12;
-  const numArtists = 5;
+  const numArtists = 8;
 
   console.log("Starting seed...");
   await generateCategories();

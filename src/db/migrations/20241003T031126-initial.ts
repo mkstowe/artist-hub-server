@@ -53,6 +53,9 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("phone", "text")
     .addColumn("email", "text")
     .addColumn("verified", "boolean", (col) => col.defaultTo(false).notNull())
+    .addColumn("validation_status", sql`validation_status`, (col) =>
+      col.defaultTo("pending").notNull()
+    )
     .addColumn("adult", "boolean", (col) => col.defaultTo(false).notNull())
     .addColumn("created_at", "timestamp", (col) =>
       col.defaultTo(sql`now()`).notNull()

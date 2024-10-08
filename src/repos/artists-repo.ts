@@ -6,7 +6,7 @@ export async function getAllArtists() {
   return await db.selectFrom("artist").selectAll().execute();
 }
 
-export async function getArtist(id: any) {
+export async function getArtistById(id: any) {
   return await db
     .selectFrom("artist")
     .selectAll()

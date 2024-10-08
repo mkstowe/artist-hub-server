@@ -8,7 +8,7 @@ export async function getAllUsers() {
   return await db.selectFrom("user").selectAll().execute();
 }
 
-export async function getUser(id: any) {
+export async function getUserById(id: any) {
   return await db
     .selectFrom("user")
     .selectAll()

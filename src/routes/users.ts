@@ -4,7 +4,7 @@ import {
   createUser,
   deleteFavorite,
   getAllUsers,
-  getUser,
+  getUserById,
   getUserAvatar,
   updateUserAvatar,
 } from "../repos/users-repo";
@@ -19,7 +19,7 @@ users.get("/", async (c) => {
 
 users.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const user = await getUser(id);
+  const user = await getUserById(id);
 
   if (!user) {
     c.status(404);
@@ -36,7 +36,7 @@ users.post("/", async (c) => {
 
 users.patch("/:id", async (c) => {
   const id = c.req.param("id");
-  const user = await getUser(id);
+  const user = await getUserById(id);
   if (!user) {
     c.status(404);
     return c.json({ error: "User not found" });
@@ -47,7 +47,7 @@ users.patch("/:id", async (c) => {
 
 users.delete("/:id", async (c) => {
   const id = c.req.param("id");
-  const user = await getUser(id);
+  const user = await getUserById(id);
   if (!user) {
     c.status(404);
     return c.json({ error: "User not found" });
