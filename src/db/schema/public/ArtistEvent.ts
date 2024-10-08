@@ -17,9 +17,9 @@ export default interface ArtistEventTable {
 
   description: ColumnType<string | null, string | null, string | null>;
 
-  starts_at: ColumnType<Date | null, Date | string | null, Date | string | null>;
+  start_date: ColumnType<Date | null, Date | string | null, Date | string | null>;
 
-  ends_at: ColumnType<Date | null, Date | string | null, Date | string | null>;
+  end_date: ColumnType<Date | null, Date | string | null, Date | string | null>;
 
   location: ColumnType<string | null, string | null, string | null>;
 

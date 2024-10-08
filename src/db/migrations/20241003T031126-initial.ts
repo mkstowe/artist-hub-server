@@ -42,6 +42,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("avatar_path", "text")
     .addColumn("slug", "text", (col) => col.unique().notNull())
     .addColumn("active", "boolean", (col) => col.defaultTo(true).notNull())
+    .addColumn("category", "text")
     .addColumn("city", "text")
     .addColumn("state", "text")
     .addColumn("instagram", "text")
@@ -105,8 +106,8 @@ export async function up(db: Kysely<any>): Promise<void> {
     )
     .addColumn("title", "text", (col) => col.notNull())
     .addColumn("description", "text")
-    .addColumn("starts_at", "timestamp")
-    .addColumn("ends_at", "timestamp")
+    .addColumn("start_date", "timestamp")
+    .addColumn("end_date", "timestamp")
     .addColumn("location", "text")
     .addColumn("created_at", "timestamp", (col) =>
       col.defaultTo(sql`now()`).notNull()
@@ -138,16 +139,6 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute();
 
   await db.schema
-    .createTable("tag")
-    .addColumn("id", "serial", (col) => col.primaryKey())
-    .addColumn("name", "text", (col) => col.notNull())
-    .addColumn("created_at", "timestamp", (col) =>
-      col.defaultTo(sql`now()`).notNull()
-    )
-    .ifNotExists()
-    .execute();
-
-  await db.schema
     .createTable("category")
     .addColumn("id", "serial", (col) => col.primaryKey())
     .addColumn("name", "text", (col) => col.notNull())
@@ -163,27 +154,11 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("artist", "integer", (col) =>
       col.references("artist.id").onDelete("cascade").notNull()
     )
-    .addColumn("tag", "integer", (col) =>
-      col.references("tag.id").onDelete("cascade").notNull()
-    )
+    .addColumn("tag", "text", (col) => col.notNull())
     .addColumn("created_at", "timestamp", (col) =>
       col.defaultTo(sql`now()`).notNull()
     )
-    .ifNotExists()
-    .execute();
-
-  await db.schema
-    .createTable("artist_category")
-    .addColumn("id", "serial", (col) => col.primaryKey())
-    .addColumn("artist", "integer", (col) =>
-      col.references("artist.id").onDelete("cascade").notNull()
-    )
-    .addColumn("category", "integer", (col) =>
-      col.references("category.id").onDelete("cascade").notNull()
-    )
-    .addColumn("created_at", "timestamp", (col) =>
-      col.defaultTo(sql`now()`).notNull()
-    )
+    .addUniqueConstraint("artist_tag_unique", ["artist", "tag"])
     .ifNotExists()
     .execute();
 
@@ -241,6 +216,12 @@ export async function up(db: Kysely<any>): Promise<void> {
     .ifNotExists()
     .execute();
   await db.schema
+    .createIndex("artist_category_idx")
+    .on("artist")
+    .columns(["category"])
+    .ifNotExists()
+    .execute();
+  await db.schema
     .createIndex("user_favorite_user_idx")
     .on("user_favorite")
     .columns(["user"])
@@ -265,15 +246,15 @@ export async function up(db: Kysely<any>): Promise<void> {
     .ifNotExists()
     .execute();
   await db.schema
-    .createIndex("artist_event_starts_at_idx")
+    .createIndex("artist_event_start_date_idx")
     .on("artist_event")
-    .columns(["starts_at"])
+    .columns(["start_date"])
     .ifNotExists()
     .execute();
   await db.schema
-    .createIndex("artist_event_ends_at_idx")
+    .createIndex("artist_event_end_date_idx")
     .on("artist_event")
-    .columns(["ends_at"])
+    .columns(["end_date"])
     .ifNotExists()
     .execute();
   await db.schema
@@ -300,26 +281,12 @@ export async function up(db: Kysely<any>): Promise<void> {
     .columns(["tag"])
     .ifNotExists()
     .execute();
-  await db.schema
-    .createIndex("artist_category_artist_idx")
-    .on("artist_category")
-    .columns(["artist"])
-    .ifNotExists()
-    .execute();
-  await db.schema
-    .createIndex("artist_category_category_idx")
-    .on("artist_category")
-    .columns(["category"])
-    .ifNotExists()
-    .execute();
 }
 
 export async function down(db: Kysely<any>): Promise<void> {
   await db.schema.dropTable("artist_validation").cascade().ifExists().execute();
-  await db.schema.dropTable("artist_category").cascade().ifExists().execute();
   await db.schema.dropTable("artist_tag").cascade().ifExists().execute();
   await db.schema.dropTable("category").cascade().ifExists().execute();
-  await db.schema.dropTable("tag").cascade().ifExists().execute();
   await db.schema.dropTable("gallery_image").cascade().ifExists().execute();
   await db.schema.dropTable("artist_event").cascade().ifExists().execute();
   await db.schema.dropTable("artist_link").cascade().ifExists().execute();
@@ -340,15 +307,11 @@ export async function down(db: Kysely<any>): Promise<void> {
     .ifExists()
     .execute();
   await db.schema.dropIndex("artist_event_artist_idx").ifExists().execute();
-  await db.schema.dropIndex("artist_event_starts_at_idx").ifExists().execute();
-  await db.schema.dropIndex("artist_event_ends_at_idx").ifExists().execute();
+  await db.schema.dropIndex("artist_event_start_date_idx").ifExists().execute();
+  await db.schema.dropIndex("artist_event_end_date_idx").ifExists().execute();
   await db.schema.dropIndex("artist_link_artist_idx").ifExists().execute();
   await db.schema.dropIndex("gallery_image_artist_idx").ifExists().execute();
   await db.schema.dropIndex("artist_tag_artist_idx").ifExists().execute();
   await db.schema.dropIndex("artist_tag_tag_idx").ifExists().execute();
-  await db.schema.dropIndex("artist_category_artist_idx").ifExists().execute();
-  await db.schema
-    .dropIndex("artist_category_category_idx")
-    .ifExists()
-    .execute();
+  await db.schema.dropIndex("artist_category_idx").ifExists().execute();
 }

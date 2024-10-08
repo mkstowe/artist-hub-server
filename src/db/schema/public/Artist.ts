@@ -23,6 +23,8 @@ export default interface ArtistTable {
 
   active: ColumnType<boolean, boolean | undefined, boolean>;
 
+  category: ColumnType<string | null, string | null, string | null>;
+
   city: ColumnType<string | null, string | null, string | null>;
 
   state: ColumnType<string | null, string | null, string | null>;

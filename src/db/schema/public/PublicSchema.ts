@@ -7,10 +7,8 @@ import type { default as UserFavoriteTable } from './UserFavorite';
 import type { default as ArtistLinkTable } from './ArtistLink';
 import type { default as ArtistEventTable } from './ArtistEvent';
 import type { default as GalleryImageTable } from './GalleryImage';
-import type { default as TagTable } from './Tag';
 import type { default as CategoryTable } from './Category';
 import type { default as ArtistTagTable } from './ArtistTag';
-import type { default as ArtistCategoryTable } from './ArtistCategory';
 import type { default as ArtistValidationTable } from './ArtistValidation';
 import type { default as KyselyMigrationTable } from './KyselyMigration';
 import type { default as KyselyMigrationLockTable } from './KyselyMigrationLock';
@@ -28,13 +26,9 @@ export default interface PublicSchema {
 
   gallery_image: GalleryImageTable;
 
-  tag: TagTable;
-
   category: CategoryTable;
 
   artist_tag: ArtistTagTable;
-
-  artist_category: ArtistCategoryTable;
 
   artist_validation: ArtistValidationTable;
 
