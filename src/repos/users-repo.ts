@@ -28,7 +28,7 @@ export async function getUserAvatar(id: number | UserId) {
     throw new NotFoundError(`User with ID ${id} does not exist`);
   }
 
-  return getImage("user-avatars", user?.avatar_path || "demo.jpg");
+  return await getImage("user-avatars", user?.avatar_path || "demo.jpg");
 }
 
 export async function updateUserAvatar(id: number | UserId, data: any) {
@@ -42,7 +42,7 @@ export async function updateUserAvatar(id: number | UserId, data: any) {
     throw new NotFoundError(`User with ID ${id} does not exist`);
   }
 
-  return updateImage(
+  return await updateImage(
     "user-avatars",
     user?.avatar_path || uuid() + ".jpg", // TODO: use the correct file extension
     data

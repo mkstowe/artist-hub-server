@@ -1,6 +1,5 @@
 import { faker } from "@faker-js/faker";
 import { db } from ".";
-import { Category, NewCategory } from "./schema/public/Category";
 import { User, NewUser, UserId } from "./schema/public/User";
 import { Artist, ArtistId, NewArtist } from "./schema/public/Artist";
 import { NewArtistLink } from "./schema/public/ArtistLink";
@@ -11,10 +10,16 @@ import { NewArtistTag } from "./schema/public/ArtistTag";
 import { NewUserFavorite } from "./schema/public/UserFavorite";
 import Role from "./schema/public/Role";
 import ValidationStatus from "./schema/public/ValidationStatus";
+import { NewDropdownCategory } from "./schema/public/DropdownCategory";
+import {
+  DropdownOption,
+  DropdownOptionId,
+  NewDropdownOption,
+} from "./schema/public/DropdownOption";
 
-faker.seed(123);
+faker.seed(123456789);
 
-const categoryNames: string[] = ["Drawing", "Leather", "Sculpture", "Tattoo"];
+const categoryNames: string[] = ["Type", "State", "Country"];
 const userAvatarPaths: string[] = [
   "demo/1.jpg",
   "demo/2.jpg",
@@ -38,9 +43,10 @@ const artistAvatarPaths: string[] = [
 ];
 const galleryPaths: string[] = ["demo/1.jpg", "demo/2.jpg", "demo/3.jpg"];
 
-const categories: NewCategory[] = [];
+const categories: NewDropdownCategory[] = [];
 let users: User[] = [];
 let artists: Artist[] = [];
+let options: DropdownOption[] = [];
 const links: NewArtistLink[] = [];
 const events: NewArtistEvent[] = [];
 const galleryImages: NewGalleryImage[] = [];
@@ -54,14 +60,35 @@ function getRandomElement(array: any[]) {
 
 export async function generateCategories() {
   console.log("Creating categories...");
-  categoryNames.forEach((c) => {
-    const category: NewCategory = {
-      name: c,
+  categoryNames.forEach(async (c, i) => {
+    const category: NewDropdownCategory = {
+      label: c,
+      index: i,
     };
     categories.push(category);
-  });
+    const created = await db
+      .insertInto("dropdown_category")
+      .values(category)
+      .returningAll()
+      .executeTakeFirst();
 
-  await db.insertInto("category").values(categories).execute();
+    for (let j = 0; j < 5; j++) {
+      const option: NewDropdownOption = {
+        category: created!.id,
+        value: faker.lorem.word(),
+        label: faker.lorem.word(),
+        index: j,
+      };
+
+      const createdOption = await db
+        .insertInto("dropdown_option")
+        .values(option)
+        .returningAll()
+        .executeTakeFirst();
+
+      options.push(createdOption!);
+    }
+  });
 }
 
 export async function generateUsers(iterations: number) {
@@ -114,7 +141,8 @@ export async function generateArtists(iterations: number) {
       adult: Math.random() < 0.8,
       instagram: faker.internet.url(),
       website: faker.internet.url(),
-      category: getRandomElement(categoryNames),
+      category: (Math.floor(Math.random() * options.length) +
+        1) as DropdownOptionId,
       active: Math.random() < 0.8,
     };
     newArtists.push(artist);

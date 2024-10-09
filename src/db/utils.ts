@@ -23,8 +23,17 @@ export function json<T>(value: T, shouldStringify = false): RawBuilder<T> {
   return sql`CAST(${value} AS JSONB)`;
 }
 
-export async function getImage(bucket: string, path: string) {
+export async function getImage(bucket: string, path: string | null) {
+  if (!path) {
+    throw new NotFoundError("Image not found");
+  }
+
   const { data, error } = await supabase.storage.from(bucket).download(path);
+
+  if (!data) {
+    throw new NotFoundError("Image not found");
+  }
+
   return { data, error };
 }
 
@@ -40,6 +49,12 @@ export async function updateImage(bucket: string, path: string, fileData: any) {
   const { data, error } = await supabase.storage
     .from(bucket)
     .update(path, fileData, { upsert: true });
+
+  return { data, error };
+}
+
+export async function deleteImage(bucket: string, paths: string[]) {
+  const { data, error } = await supabase.storage.from(bucket).remove(paths);
 
   return { data, error };
 }

@@ -12,6 +12,45 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute();
 
   await db.schema
+    .createTable("dropdown_category")
+    .addColumn("id", "serial", (col) => col.primaryKey())
+    .addColumn("label", "text", (col) => col.notNull())
+    .addColumn("active", "boolean", (col) => col.defaultTo(true).notNull())
+    .addColumn("index", "integer", (col) => col.notNull())
+    .addColumn("created_at", "timestamp", (col) =>
+      col.defaultTo(sql`now()`).notNull()
+    )
+    .addColumn("updated_at", "timestamp", (col) =>
+      col.defaultTo(sql`now()`).notNull()
+    )
+    .addUniqueConstraint("dropdown_category_index_unique", ["index"])
+    .ifNotExists()
+    .execute();
+
+  await db.schema
+    .createTable("dropdown_option")
+    .addColumn("id", "serial", (col) => col.primaryKey())
+    .addColumn("category", "integer", (col) =>
+      col.references("dropdown_category.id").onDelete("cascade").notNull()
+    )
+    .addColumn("value", "text", (col) => col.notNull())
+    .addColumn("label", "text", (col) => col.notNull())
+    .addColumn("active", "boolean", (col) => col.defaultTo(true).notNull())
+    .addColumn("index", "integer", (col) => col.notNull())
+    .addColumn("created_at", "timestamp", (col) =>
+      col.defaultTo(sql`now()`).notNull()
+    )
+    .addColumn("updated_at", "timestamp", (col) =>
+      col.defaultTo(sql`now()`).notNull()
+    )
+    .addUniqueConstraint("dropdown_option_category_index_unique", [
+      "category",
+      "index",
+    ])
+    .ifNotExists()
+    .execute();
+
+  await db.schema
     .createTable("user")
     .addColumn("id", "serial", (col) => col.primaryKey())
     .addColumn("first_name", "text", (col) => col.notNull())
@@ -42,7 +81,9 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("avatar_path", "text")
     .addColumn("slug", "text", (col) => col.unique().notNull())
     .addColumn("active", "boolean", (col) => col.defaultTo(true).notNull())
-    .addColumn("category", "text")
+    .addColumn("category", "integer", (col) =>
+      col.references("dropdown_option.id").onDelete("cascade").notNull()
+    )
     .addColumn("city", "text")
     .addColumn("state", "text")
     .addColumn("instagram", "text")
@@ -98,6 +139,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("updated_at", "timestamp", (col) =>
       col.defaultTo(sql`now()`).notNull()
     )
+    .addUniqueConstraint("artist_link_artist_index_unique", ["artist", "index"])
     .ifNotExists()
     .execute();
 
@@ -138,16 +180,10 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("updated_at", "timestamp", (col) =>
       col.defaultTo(sql`now()`).notNull()
     )
-    .ifNotExists()
-    .execute();
-
-  await db.schema
-    .createTable("category")
-    .addColumn("id", "serial", (col) => col.primaryKey())
-    .addColumn("name", "text", (col) => col.notNull())
-    .addColumn("created_at", "timestamp", (col) =>
-      col.defaultTo(sql`now()`).notNull()
-    )
+    .addUniqueConstraint("gallery_image_artist_index_unique", [
+      "artist",
+      "index",
+    ])
     .ifNotExists()
     .execute();
 
@@ -296,8 +332,12 @@ export async function down(db: Kysely<any>): Promise<void> {
   await db.schema.dropTable("user_favorite").cascade().ifExists().execute();
   await db.schema.dropTable("artist").cascade().ifExists().execute();
   await db.schema.dropTable("user").cascade().ifExists().execute();
+  await db.schema.dropTable("dropdown_option").cascade().ifExists().execute();
+  await db.schema.dropTable("dropdown_category").cascade().ifExists().execute();
+
   await db.schema.dropType("role").ifExists().execute();
   await db.schema.dropType("validation_status").ifExists().execute();
+
   await db.schema.dropIndex("user_email_idx").ifExists().execute();
   await db.schema.dropIndex("user_role_idx").ifExists().execute();
   await db.schema.dropIndex("artist_slug_idx").ifExists().execute();

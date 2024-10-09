@@ -7,6 +7,7 @@ import {
   getUserById,
   getUserAvatar,
   updateUserAvatar,
+  updateUser,
 } from "../repos/users-repo";
 import { NotFoundError } from "../db/utils";
 import { UserId } from "../db/schema/public/User";
@@ -43,7 +44,7 @@ users.patch("/:id", async (c) => {
     c.status(404);
     return c.json({ error: "User not found" });
   }
-  const updatedUser = await c.req.json();
+  const updatedUser = await updateUser(id, await c.req.json());
   return c.json(updatedUser);
 });
 
