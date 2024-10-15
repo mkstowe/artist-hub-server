@@ -62,7 +62,10 @@ users.get("/:id/avatar", async (c) => {
   const id = +c.req.param("id");
 
   try {
-    const { data, error } = await getUserAvatar(id);
+    const { data, error } = (await getUserAvatar(id)) as {
+      data: Blob;
+      error: any;
+    };
 
     if (error) {
       c.status(500);
@@ -91,7 +94,10 @@ users.post("/:id/avatar", async (c) => {
   const fileData = await c.req.parseBody();
 
   try {
-    const { data, error } = await updateUserAvatar(id, fileData);
+    const { data, error } = (await updateUserAvatar(id, fileData)) as {
+      data: any;
+      error: any;
+    };
 
     if (error) {
       c.status(500);
