@@ -1,7 +1,14 @@
 import { db } from "../db";
 import { ArtistId, ArtistUpdate, NewArtist } from "../db/schema/public/Artist";
 import { jsonArrayFrom } from "kysely/helpers/postgres";
-import { deleteImage, getImage, NotFoundError, updateImage } from "../db/utils";
+import {
+  deleteImage,
+  errorResponse,
+  getImage,
+  handleError,
+  NotFoundError,
+  updateImage,
+} from "../db/utils";
 import { v4 as uuid } from "uuid";
 import {
   ArtistLinkId,
@@ -23,238 +30,406 @@ import {
   ArtistValidationUpdate,
   NewArtistValidation,
 } from "../db/schema/public/ArtistValidation";
+import { getUserById } from "./users-repo";
+import { number } from "zod";
 
 export async function getAllArtists() {
-  return await db.selectFrom("artist").selectAll().execute();
+  try {
+    return await db.selectFrom("artist").selectAll().execute();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function getArtistById(id: number | ArtistId) {
-  return await db
-    .selectFrom("artist")
-    .selectAll()
-    .where("id", "=", id as ArtistId)
-    .executeTakeFirst();
+  try {
+    const artist = await db
+      .selectFrom("artist")
+      .selectAll()
+      .where("id", "=", id as ArtistId)
+      .executeTakeFirst();
+
+    if (!artist) {
+      throw new NotFoundError(`Artist with ID ${id} does not exist`);
+    }
+
+    return artist;
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function searchArtists(query: string) {}
 
 export async function getArtistAvatar(id: number | ArtistId) {
-  const artist = await getArtistById(id);
+  try {
+    const existingArtist = await db
+      .selectFrom("artist")
+      .select("avatar_path")
+      .where("id", "=", id as ArtistId)
+      .executeTakeFirst();
 
-  if (!artist) {
-    throw new NotFoundError(`Artist with ID ${id} does not exist`);
+    if (!existingArtist) {
+      throw new NotFoundError(`Artist with ID ${id} does not exist`);
+    }
+
+    return await getImage("artist-avatars", existingArtist?.avatar_path);
+  } catch (error) {
+    return errorResponse(handleError(error));
   }
-
-  return await getImage("artist-avatars", artist?.avatar_path);
 }
 
 export async function updateArtistAvatar(id: number | ArtistId, data: any) {
-  const artist = await getArtistById(id);
+  try {
+    const existingArtist = await db
+      .selectFrom("artist")
+      .select("avatar_path")
+      .where("id", "=", id as ArtistId)
+      .executeTakeFirst();
 
-  if (!artist) {
-    throw new NotFoundError(`Artist with ID ${id} does not exist`);
+    if (!existingArtist) {
+      throw new NotFoundError(`Artist with ID ${id} does not exist`);
+    }
+
+    return await updateImage(
+      "artist-avatars",
+      existingArtist?.avatar_path || uuid() + ".jpg", // TODO: get file extension from data
+      data
+    );
+  } catch (error) {
+    return errorResponse(handleError(error));
   }
-
-  return await updateImage(
-    "artist-avatars",
-    artist?.avatar_path || uuid() + ".jpg", // TODO: get file extension from data
-    data
-  );
 }
 
 export async function createArtist(input: NewArtist) {
-  return await db
-    .insertInto("artist")
-    .values(input)
-    .returningAll()
-    .executeTakeFirstOrThrow();
+  try {
+    return await db
+      .insertInto("artist")
+      .values(input)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function updateArtist(id: number | ArtistId, input: ArtistUpdate) {
-  input.updated_at = new Date();
+  try {
+    await getArtistById(id);
 
-  return await db
-    .updateTable("artist")
-    .set(input)
-    .where("id", "=", id as ArtistId)
-    .returningAll()
-    .execute();
+    input.updated_at = new Date();
+
+    return await db
+      .updateTable("artist")
+      .set(input)
+      .where("id", "=", id as ArtistId)
+      .returningAll()
+      .execute();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function deleteArtist(id: number | ArtistId) {
-  return await db
-    .deleteFrom("artist")
-    .where("id", "=", id as ArtistId)
-    .returningAll()
-    .executeTakeFirst();
+  try {
+    await getArtistById(id);
+
+    return await db
+      .deleteFrom("artist")
+      .where("id", "=", id as ArtistId)
+      .returningAll()
+      .executeTakeFirst();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function getArtistProfile(id: number | ArtistId) {
-  return await db
-    .selectFrom("artist as a")
-    .selectAll()
-    .select((eb) => [
-      "id",
-      jsonArrayFrom(
-        eb
-          .selectFrom("artist_link as l")
-          .selectAll()
-          .whereRef("l.artist", "=", "a.id")
-      ).as("links"),
-    ])
-    .select((eb) => [
-      "id",
-      jsonArrayFrom(
-        eb
-          .selectFrom("artist_event as e")
-          .selectAll()
-          .whereRef("e.artist", "=", "a.id")
-      ).as("events"),
-    ])
-    .select((eb) => [
-      "id",
-      jsonArrayFrom(
-        eb
-          .selectFrom("gallery_image as i")
-          .selectAll()
-          .whereRef("i.artist", "=", "a.id")
-      ).as("images"),
-    ])
-    .where("a.id", "=", id as ArtistId)
-    .executeTakeFirst();
+  try {
+    const artist = await db
+      .selectFrom("artist as a")
+      .selectAll()
+      .select((eb) => [
+        "id",
+        jsonArrayFrom(
+          eb
+            .selectFrom("artist_link as l")
+            .selectAll()
+            .whereRef("l.artist", "=", "a.id")
+        ).as("links"),
+      ])
+      .select((eb) => [
+        "id",
+        jsonArrayFrom(
+          eb
+            .selectFrom("artist_event as e")
+            .selectAll()
+            .whereRef("e.artist", "=", "a.id")
+        ).as("events"),
+      ])
+      .select((eb) => [
+        "id",
+        jsonArrayFrom(
+          eb
+            .selectFrom("gallery_image as i")
+            .selectAll()
+            .whereRef("i.artist", "=", "a.id")
+        ).as("images"),
+      ])
+      .where("a.id", "=", id as ArtistId)
+      .executeTakeFirst();
+
+    if (!artist) {
+      throw new NotFoundError(`Artist with ID ${id} does not exist`);
+    }
+
+    return artist;
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function createArtistLink(input: NewArtistLink) {
-  return await db
-    .insertInto("artist_link")
-    .values(input)
-    .returningAll()
-    .executeTakeFirstOrThrow();
+  try {
+    await getArtistById(input.artist);
+
+    return await db
+      .insertInto("artist_link")
+      .values(input)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function updateArtistLink(
   id: number | ArtistLinkId,
   input: ArtistLinkUpdate
 ) {
-  return await db
-    .updateTable("artist_link")
-    .set(input)
-    .where("id", "=", id as ArtistLinkId)
-    .returningAll()
-    .execute();
+  try {
+    const link = await db
+      .selectFrom("artist_link")
+      .select("id")
+      .where("id", "=", id as ArtistLinkId)
+      .executeTakeFirst();
+
+    if (!link) {
+      throw new NotFoundError(`Link with ID ${id} does not exist`);
+    }
+
+    input.updated_at = new Date();
+
+    return await db
+      .updateTable("artist_link")
+      .set(input)
+      .where("id", "=", id as ArtistLinkId)
+      .returningAll()
+      .execute();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function deleteArtistLink(id: number | ArtistLinkId) {
-  return await db
-    .deleteFrom("artist_link")
-    .where("id", "=", id as ArtistLinkId)
-    .returningAll()
-    .executeTakeFirst();
+  try {
+    const link = await db
+      .selectFrom("artist_link")
+      .select("id")
+      .where("id", "=", id as ArtistLinkId)
+      .executeTakeFirst();
+
+    if (!link) {
+      throw new NotFoundError(`Link with ID ${id} does not exist`);
+    }
+
+    return await db
+      .deleteFrom("artist_link")
+      .where("id", "=", id as ArtistLinkId)
+      .returningAll()
+      .executeTakeFirst();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function getArtistEvents(artist: number | ArtistId) {
-  return await db
-    .selectFrom("artist_event")
-    .selectAll()
-    .where("artist", "=", artist as ArtistId)
-    .execute();
+  try {
+    getArtistById(artist);
+
+    return await db
+      .selectFrom("artist_event")
+      .selectAll()
+      .where("artist", "=", artist as ArtistId)
+      .execute();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function getArtistEventById(id: number | ArtistEventId) {
-  return await db
-    .selectFrom("artist_event")
-    .selectAll()
-    .where("id", "=", id as ArtistEventId)
-    .executeTakeFirst();
+  try {
+    const event = await db
+      .selectFrom("artist_event")
+      .selectAll()
+      .where("id", "=", id as ArtistEventId)
+      .executeTakeFirst();
+
+    if (!event) {
+      throw new NotFoundError(`Event with ID ${id} does not exist`);
+    }
+
+    return event;
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function createArtistEvent(input: NewArtistEvent) {
-  return await db
-    .insertInto("artist_event")
-    .values(input)
-    .returningAll()
-    .executeTakeFirstOrThrow();
+  try {
+    await getArtistById(input.artist);
+
+    return await db
+      .insertInto("artist_event")
+      .values(input)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function updateArtistEvent(
   id: number | ArtistEventId,
   input: ArtistEventUpdate
 ) {
-  return await db
-    .updateTable("artist_event")
-    .set(input)
-    .where("id", "=", id as ArtistEventId)
-    .returningAll()
-    .execute();
+  try {
+    await getArtistEventById(id);
+
+    input.updated_at = new Date();
+
+    return await db
+      .updateTable("artist_event")
+      .set(input)
+      .where("id", "=", id as ArtistEventId)
+      .returningAll()
+      .execute();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function deleteArtistEvent(id: number | ArtistEventId) {
-  return await db
-    .deleteFrom("artist_event")
-    .where("id", "=", id as ArtistEventId)
-    .returningAll()
-    .executeTakeFirst();
+  try {
+    await getArtistEventById(id);
+
+    return await db
+      .deleteFrom("artist_event")
+      .where("id", "=", id as ArtistEventId)
+      .returningAll()
+      .executeTakeFirst();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function getArtistTags(artist: number | ArtistId) {
-  return await db
-    .selectFrom("artist_tag")
-    .selectAll()
-    .where("artist", "=", artist as ArtistId)
-    .execute();
+  try {
+    await getArtistById(artist);
+
+    return await db
+      .selectFrom("artist_tag")
+      .selectAll()
+      .where("artist", "=", artist as ArtistId)
+      .execute();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function getArtistTagById(id: number | ArtistTagId) {
-  return await db
-    .selectFrom("artist_tag")
-    .selectAll()
-    .where("id", "=", id as ArtistTagId)
-    .executeTakeFirst();
+  try {
+    const tag = await db
+      .selectFrom("artist_tag")
+      .selectAll()
+      .where("id", "=", id as ArtistTagId)
+      .executeTakeFirst();
+
+    if (!tag) {
+      throw new NotFoundError(`Tag with ID ${id} does not exist`);
+    }
+
+    return tag;
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function createArtistTag(input: NewArtistTag) {
-  return await db
-    .insertInto("artist_tag")
-    .values(input)
-    .returningAll()
-    .executeTakeFirstOrThrow();
+  try {
+    await getArtistById(input.artist);
+
+    return await db
+      .insertInto("artist_tag")
+      .values(input)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function deleteArtistTag(id: number | ArtistTagId) {
-  return await db
-    .deleteFrom("artist_tag")
-    .where("id", "=", id as ArtistTagId)
-    .returningAll()
-    .executeTakeFirst();
+  try {
+    await getArtistTagById(id);
+
+    return await db
+      .deleteFrom("artist_tag")
+      .where("id", "=", id as ArtistTagId)
+      .returningAll()
+      .executeTakeFirst();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function getArtistGallery(artist: number | ArtistId) {
-  const imageObjects = await db
-    .selectFrom("gallery_image")
-    .selectAll()
-    .where("artist", "=", artist as ArtistId)
-    .execute();
+  try {
+    await getArtistById(artist);
 
-  const images: { data: Blob; error: any }[] = [];
-  imageObjects.forEach(async (i) => {
-    images.push(await getImage("artist-galleries", i.path));
-  });
+    const imageObjects = await db
+      .selectFrom("gallery_image")
+      .selectAll()
+      .where("artist", "=", artist as ArtistId)
+      .execute();
 
-  return images;
+    const images: { data: Blob; error: any }[] = [];
+    imageObjects.forEach(async (i) => {
+      images.push(await getImage("artist-galleries", i.path));
+    });
+
+    return images;
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function getArtistGalleryImage(id: number | GalleryImageId) {
-  const image = await db
-    .selectFrom("gallery_image")
-    .selectAll()
-    .where("id", "=", id as GalleryImageId)
-    .executeTakeFirst();
+  try {
+    const image = await db
+      .selectFrom("gallery_image")
+      .selectAll()
+      .where("id", "=", id as GalleryImageId)
+      .executeTakeFirst();
 
-  if (!image) {
-    throw new NotFoundError("Image not found");
+    if (!image) {
+      throw new NotFoundError(`Image with ID ${id} does not exist`);
+    }
+
+    return await getImage("artist-galleries", image.path);
+  } catch (error) {
+    return errorResponse(handleError(error));
   }
-
-  return await getImage("artist-galleries", image.path);
 }
 
 export async function updateArtistGalleryImage(
@@ -262,62 +437,131 @@ export async function updateArtistGalleryImage(
   artist: number | ArtistId,
   id?: number | GalleryImageId
 ) {
-  const image = await db
-    .selectFrom("gallery_image")
-    .select("path")
-    .where("id", "=", id as GalleryImageId)
-    .executeTakeFirst();
+  try {
+    await getArtistById(artist);
 
-  return await updateImage(
-    "artist-galleries",
-    image?.path || artist + "/" + uuid() + ".jpg",
-    data
-  ); // TODO: get file type
+    if (id) await getArtistGalleryImage(id);
+
+    const image = await db
+      .selectFrom("gallery_image")
+      .select("path")
+      .where("id", "=", id as GalleryImageId)
+      .executeTakeFirst();
+
+    return await updateImage(
+      "artist-galleries",
+      image?.path || artist + "/" + uuid() + ".jpg",
+      data
+    ); // TODO: get file type
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function deleteArtistGallery(artist: number | ArtistId) {
-  const images = await db
-    .selectFrom("gallery_image")
-    .select("path")
-    .where("artist", "=", artist as ArtistId)
-    .execute();
+  try {
+    await getArtistById(artist);
 
-  return await deleteImage(
-    "artist-galleries",
-    images.map((i) => i.path)
-  );
+    const images = await db
+      .selectFrom("gallery_image")
+      .select("path")
+      .where("artist", "=", artist as ArtistId)
+      .execute();
+
+    return await deleteImage(
+      "artist-galleries",
+      images.map((i) => i.path)
+    );
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function deleteArtistGalleryImage(id: number | GalleryImageId) {
-  const image = await db
-    .selectFrom("gallery_image")
-    .select(["artist", "path"])
-    .where("id", "=", id as GalleryImageId)
-    .executeTakeFirst();
+  try {
+    await getArtistGalleryImage(id);
 
-  if (!image) {
-    throw new NotFoundError("Image not found");
+    const image = await db
+      .selectFrom("gallery_image")
+      .select(["artist", "path"])
+      .where("id", "=", id as GalleryImageId)
+      .executeTakeFirst();
+
+    return await deleteImage("artist-galleries", [image!.path]);
+  } catch (error) {
+    return errorResponse(handleError(error));
   }
+}
 
-  return await deleteImage("artist-galleries", [image.path]);
+export async function getArtistValidationByArtist(artist: number | ArtistId) {
+  try {
+    await getArtistById(artist);
+
+    const validation = await db
+      .selectFrom("artist_validation")
+      .selectAll()
+      .where("artist", "=", artist as ArtistId)
+      .executeTakeFirst();
+
+    if (!validation) {
+      throw new NotFoundError(
+        `Validation for artist with ID ${artist} does not exist`
+      );
+    }
+
+    return validation;
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
+}
+
+export async function getArtistValidationById(id: number | ArtistValidationId) {
+  try {
+    const validation = await db
+      .selectFrom("artist_validation")
+      .selectAll()
+      .where("id", "=", id as ArtistValidationId)
+      .executeTakeFirst();
+
+    if (!validation) {
+      throw new NotFoundError(`Validation with ID ${id} does not exist`);
+    }
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function createArtistValidation(input: NewArtistValidation) {
-  return await db
-    .insertInto("artist_validation")
-    .values(input)
-    .returningAll()
-    .executeTakeFirstOrThrow();
+  try {
+    await getArtistById(input.artist);
+    await getUserById(input.admin);
+
+    return await db
+      .insertInto("artist_validation")
+      .values(input)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }
 
 export async function updateArtistValidation(
-  id: number | ArtistValidationId,
+  artist: number | ArtistId,
   input: ArtistValidationUpdate
 ) {
-  return await db
-    .updateTable("artist_validation")
-    .set(input)
-    .where("id", "=", id as ArtistValidationId)
-    .returningAll()
-    .execute();
+  try {
+    await getArtistById(artist);
+
+    input.updated_at = new Date() as Date;
+
+    return await db
+      .updateTable("artist_validation")
+      .set(input)
+      .where("artist", "=", artist as ArtistId)
+      .returningAll()
+      .execute();
+  } catch (error) {
+    return errorResponse(handleError(error));
+  }
 }

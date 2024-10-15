@@ -1,5 +1,6 @@
 import { RawBuilder, sql } from "kysely";
 import { supabase } from ".";
+import { DatabaseError } from "pg";
 
 export const withTimestamps = (qb: any) => {
   return qb
@@ -65,4 +66,49 @@ export class NotFoundError extends Error {
     super(message);
     this.statusCode = 404; // Set the status code for not found
   }
+}
+
+// EXAMPLE: logError('Error while fetching data', error)
+export function logError(message: string, error: any) {
+  console.error(`[ERROR] ${error.statusCode}: ${message}\n`);
+}
+
+// EXAMPLE: logInfo('User logged in', { userId: 123, username: 'john_doe' })
+export function logInfo(message: string, data?: any) {
+  console.info(`[INFO] ${message}\n`, data || "");
+}
+
+export function handleError(error: any) {
+  logError(error.message, error);
+
+  if (error instanceof NotFoundError) {
+    return { status: error.statusCode, message: error.message };
+  }
+
+  if (error instanceof DatabaseError) {
+    if (error.message.includes("unique constraint")) {
+      return { status: 409, message: "Resource already exists" };
+    }
+  }
+
+  return { status: 500, message: "An unexpected error occurred" };
+}
+
+// EXAMPLE: successResponse({ userId: 123, username: 'john_doe' })
+export function successResponse(data: any, statusCode: number = 200) {
+  return {
+    statusCode,
+    body: JSON.stringify({ error: false, data }),
+  };
+}
+
+// EXAMPLE: errorResponse(error.message, error.statusCode || 500)
+export function errorResponse(data: { message: string; status: number }) {
+  return {
+    statusCode: data.status || 500,
+    body: JSON.stringify({
+      error: true,
+      message: data.message,
+    }),
+  };
 }
