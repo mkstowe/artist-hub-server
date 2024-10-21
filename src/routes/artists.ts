@@ -62,17 +62,20 @@ artists.get("/:id/full", async (c) => {
 
 artists.post("/", async (c) => {
   const artist = await createArtist(await c.req.json());
+  if (!artist) {
+    c.status(500);
+    return c.json({ error: "Failed to create artist" });
+  }
   return c.json(artist);
 });
 
 artists.patch("/:id", async (c) => {
   const id = +c.req.param("id");
-  const artist = await getArtistById(id);
-  if (!artist) {
-    c.status(404);
-    return c.json({ error: "Artist not found" });
-  }
   const updatedArtist = updateArtist(id, await c.req.json());
+  if (!updatedArtist) {
+    c.status(500);
+    return c.json({ error: "Failed to update artist" });
+  }
   return c.json(updatedArtist);
 });
 
@@ -80,8 +83,8 @@ artists.delete("/:id", async (c) => {
   const id = +c.req.param("id");
   const artist = await deleteArtist(id);
   if (!artist) {
-    c.status(404);
-    return c.json({ error: "Artist not found" });
+    c.status(500);
+    return c.json({ error: "Failed to delete artist" });
   }
   return c.json({ message: "Artist deleted" });
 });
@@ -94,7 +97,10 @@ artists.get("/:id/avatar", async (c) => {
   const id = +c.req.param("id");
 
   try {
-    const { data, error } = await getArtistAvatar(id);
+    const { data, error } = (await getArtistAvatar(id)) as {
+      data: Blob;
+      error: any;
+    };
 
     if (error) {
       c.status(500);
@@ -123,7 +129,10 @@ artists.post("/:id/avatar", async (c) => {
   const fileData = await c.req.parseBody();
 
   try {
-    const { data, error } = await updateArtistAvatar(id, fileData);
+    const { data, error } = (await updateArtistAvatar(id, fileData)) as {
+      data: any;
+      error: any;
+    };
 
     if (error) {
       c.status(500);

@@ -144,8 +144,14 @@ export async function getDropdownByLabel(label: string) {
 
 export async function createDropdown(
   category: NewDropdownCategory,
-  options: NewDropdownOption[]
+  options: Partial<NewDropdownOption>[]
 ) {
+  options.map((o => {
+    if (!o.label || !o.index || !o.value) {
+      throw new Error("Missing required fields for dropdown option")
+    }
+  }))
+
   try {
     let newCategoryId: number | undefined;
     await db.transaction().execute(async (trx) => {
@@ -162,7 +168,7 @@ export async function createDropdown(
           o.category = newCategory.id;
           await trx
             .insertInto("dropdown_option")
-            .values(o)
+            .values(o as NewDropdownOption)
             .executeTakeFirstOrThrow();
         })
       );

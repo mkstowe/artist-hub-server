@@ -1,13 +1,20 @@
 {
   "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
     "strict": true,
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "target": "ESNext",
     "module": "commonjs",
     "skipLibCheck": true,
-    "lib": [
-      "ESNext"
-    ]
-  }
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "lib": ["ESNext"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/__tests__/**"]
 }

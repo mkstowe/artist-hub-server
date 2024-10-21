@@ -8,6 +8,7 @@ import {
   getUserAvatar,
   updateUserAvatar,
   updateUser,
+  deleteUser,
 } from "../repos/users-repo";
 import { NotFoundError } from "../db/utils";
 import { UserId } from "../db/schema/public/User";
@@ -34,26 +35,30 @@ users.get("/:id", async (c) => {
 
 users.post("/", async (c) => {
   const user = await createUser(await c.req.json());
+
+  if (!user) {
+    c.status(500);
+    return c.json({ error: "Failed to create user" });
+  }
   return c.json(user);
 });
 
 users.patch("/:id", async (c) => {
   const id = +c.req.param("id");
-  const user = await getUserById(id);
-  if (!user) {
-    c.status(404);
-    return c.json({ error: "User not found" });
-  }
   const updatedUser = await updateUser(id, await c.req.json());
+  if (!updatedUser) {
+    c.status(500);
+    return c.json({ error: "Failed to update user" });
+  }
   return c.json(updatedUser);
 });
 
 users.delete("/:id", async (c) => {
   const id = +c.req.param("id");
-  const user = await getUserById(id);
-  if (!user) {
-    c.status(404);
-    return c.json({ error: "User not found" });
+  const deletedUser = await deleteUser(id);
+  if (!deletedUser) {
+    c.status(500);
+    return c.json({ error: "Failed to delete user" });
   }
   return c.json({ message: "User deleted" });
 });
@@ -118,6 +123,12 @@ users.post("/:id/favorite/:artist", async (c) => {
   const artist = +c.req.param("artist") as ArtistId;
 
   const favorite = await createFavorite({ user, artist });
+
+  if (!favorite) {
+    c.status(500);
+    return c.json({ error: "Failed to create favorite" });
+  }
+
   return c.json(favorite);
 });
 
@@ -125,5 +136,11 @@ users.delete("/:id/favorite/:artist", async (c) => {
   const user = +c.req.param("id");
   const artist = +c.req.param("artist");
   const favorite = await deleteFavorite(user, artist);
+
+  if (!favorite) {
+    c.status(500);
+    return c.json({ error: "Failed to delete favorite" });
+  }
+
   return c.json(favorite);
 });
