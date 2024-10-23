@@ -53,6 +53,8 @@ admin.post("/dropdowns", async (c) => {
       JSON.parse(category as string),
       JSON.parse(options as string)
     );
+
+    c.status(201);
     return c.json(created);
   } catch (error) {
     const result = handleError(error);

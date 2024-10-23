@@ -19,7 +19,7 @@ import {
 
 faker.seed(123456789);
 
-const categoryNames: string[] = ["Type", "State", "Country"];
+const categoryNames: string[] = ["Country"];
 const userAvatarPaths: string[] = [
   "demo/1.jpg",
   "demo/2.jpg",

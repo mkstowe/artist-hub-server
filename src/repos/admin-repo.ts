@@ -157,6 +157,7 @@ export async function updateDropdown(
   options: Partial<NewDropdownOption>[]
 ) {
   const existingCategory = await getDropdownCategoryById(categoryId);
+  category.updated_at = new Date();
   await db.transaction().execute(async (trx) => {
     const updatedCategory = await trx
       .updateTable("dropdown_category")

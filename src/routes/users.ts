@@ -3,70 +3,80 @@ import {
   createFavorite,
   createUser,
   deleteFavorite,
-  getAllUsers,
+  getUsers,
   getUserById,
   getUserAvatar,
   updateUserAvatar,
   updateUser,
   deleteUser,
 } from "../repos/users-repo";
-import { NotFoundError } from "../db/utils";
+import { handleError, NotFoundError } from "../db/utils";
 import { UserId } from "../db/schema/public/User";
 import { ArtistId } from "../db/schema/public/Artist";
 
 export const users = new Hono();
 
 users.get("/", async (c) => {
-  const users = await getAllUsers();
-  return c.json(users);
+  try {
+    return c.json(await getUsers());
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
+  }
 });
 
 users.get("/:id", async (c) => {
-  const id = +c.req.param("id");
-  const user = await getUserById(id);
-
-  if (!user) {
-    c.status(404);
-    return c.json({ error: "User not found" });
+  try {
+    const id = +c.req.param("id");
+    return c.json(await getUserById(id));
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-
-  return c.json(user);
 });
 
 users.post("/", async (c) => {
-  const user = await createUser(await c.req.json());
-
-  if (!user) {
-    c.status(500);
-    return c.json({ error: "Failed to create user" });
+  try {
+    const user = await createUser(await c.req.json());
+    c.status(201);
+    return c.json(user);
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-  return c.json(user);
 });
 
 users.patch("/:id", async (c) => {
-  const id = +c.req.param("id");
-  const updatedUser = await updateUser(id, await c.req.json());
-  if (!updatedUser) {
-    c.status(500);
-    return c.json({ error: "Failed to update user" });
+  try {
+    const id = +c.req.param("id");
+    const updatedUser = await updateUser(id, await c.req.json());
+    return c.json(updatedUser);
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-  return c.json(updatedUser);
 });
 
 users.delete("/:id", async (c) => {
-  const id = +c.req.param("id");
-  const deletedUser = await deleteUser(id);
-  if (!deletedUser) {
-    c.status(500);
-    return c.json({ error: "Failed to delete user" });
+  try {
+    const id = +c.req.param("id");
+    const deletedUser = await deleteUser(id);
+    return c.json({ message: "User deleted" });
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-  return c.json({ message: "User deleted" });
 });
 
 users.get("/:id/avatar", async (c) => {
-  const id = +c.req.param("id");
-
   try {
+    const id = +c.req.param("id");
+
     const { data, error } = (await getUserAvatar(id)) as {
       data: Blob;
       error: any;
@@ -87,18 +97,16 @@ users.get("/:id/avatar", async (c) => {
     c.header("Content-Type", data?.type);
     return c.json({ data: encoded });
   } catch (error) {
-    if (error instanceof NotFoundError) {
-      c.status(404);
-      return c.json({ error: error.message });
-    }
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
 });
 
 users.post("/:id/avatar", async (c) => {
-  const id = +c.req.param("id");
-  const fileData = await c.req.parseBody();
-
   try {
+    const id = +c.req.param("id");
+    const fileData = await c.req.parseBody();
     const { data, error } = (await updateUserAvatar(id, fileData)) as {
       data: any;
       error: any;
@@ -108,39 +116,39 @@ users.post("/:id/avatar", async (c) => {
       c.status(500);
       return c.json(error);
     }
-
+    
     return c.json(data);
   } catch (error) {
-    if (error instanceof NotFoundError) {
-      c.status(404);
-      return c.json({ error: error.message });
-    }
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
 });
 
 users.post("/:id/favorite/:artist", async (c) => {
-  const user = +c.req.param("id") as UserId;
-  const artist = +c.req.param("artist") as ArtistId;
+  try {
+    const user = +c.req.param("id") as UserId;
+    const artist = +c.req.param("artist") as ArtistId;
 
-  const favorite = await createFavorite({ user, artist });
-
-  if (!favorite) {
-    c.status(500);
-    return c.json({ error: "Failed to create favorite" });
+    const favorite = await createFavorite({ user, artist });
+    c.status(201)
+    return c.json(favorite);
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-
-  return c.json(favorite);
 });
 
 users.delete("/:id/favorite/:artist", async (c) => {
-  const user = +c.req.param("id");
-  const artist = +c.req.param("artist");
-  const favorite = await deleteFavorite(user, artist);
-
-  if (!favorite) {
-    c.status(500);
-    return c.json({ error: "Failed to delete favorite" });
+  try {
+    const user = +c.req.param("id");
+    const artist = +c.req.param("artist");
+    const favorite = await deleteFavorite(user, artist);
+    return c.json(favorite);
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-
-  return c.json(favorite);
 });
