@@ -10,7 +10,7 @@ import {
   deleteArtistGalleryImage,
   deleteArtistLink,
   deleteArtistTag,
-  getAllArtists,
+  getArtists,
   getArtistAvatar,
   getArtistById,
   getArtistEventById,
@@ -33,7 +33,7 @@ export const artists = new Hono();
 
 artists.get("/", async (c) => {
   try {
-    const artists = await getAllArtists();
+    const artists = await getArtists();
     return c.json(artists);
   } catch (error) {
     const result = handleError(error);

@@ -33,7 +33,7 @@ import {
 import { getUserById } from "./users-repo";
 import { number } from "zod";
 
-export async function getAllArtists() {
+export async function getArtists() {
   return await db.selectFrom("artist").selectAll().execute();
 }
 
@@ -199,12 +199,18 @@ export async function updateArtistLink(
 
   input.updated_at = new Date();
 
-  return await db
+  const created = await db
     .updateTable("artist_link")
     .set(input)
     .where("id", "=", id as ArtistLinkId)
     .returningAll()
-    .execute();
+    .executeTakeFirst();
+    
+    if (!created) {
+      throw new Error("Error creating artist link")
+    }
+    
+    return created;
 }
 
 export async function deleteArtistLink(id: number | ArtistLinkId) {
