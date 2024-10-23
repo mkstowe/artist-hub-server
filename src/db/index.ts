@@ -6,7 +6,10 @@ import { createClient } from "@supabase/supabase-js";
 export const db = new Kysely<Database>({
   dialect: new PostgresDialect({
     pool: new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString:
+        process.env.ENV === "test"
+          ? process.env.TEST_DATABASE_URL
+          : process.env.DATABASE_URL,
     }),
   }),
 });

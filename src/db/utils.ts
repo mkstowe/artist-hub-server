@@ -1,6 +1,7 @@
 import { RawBuilder, sql } from "kysely";
 import { supabase } from ".";
 import { DatabaseError } from "pg";
+import { StatusCode } from "hono/utils/http-status";
 
 export const withTimestamps = (qb: any) => {
   return qb
@@ -61,7 +62,7 @@ export async function deleteImage(bucket: string, paths: string[]) {
 }
 
 export class NotFoundError extends Error {
-  statusCode: number;
+  statusCode: StatusCode;
   constructor(message: string) {
     super(message);
     this.statusCode = 404; // Set the status code for not found
@@ -87,17 +88,17 @@ export function handleError(error: any) {
 
   if (error instanceof DatabaseError) {
     if (error.message.includes("unique constraint")) {
-      return { status: 409, message: "Resource already exists" };
+      return { status: 409 as StatusCode, message: "Resource already exists" };
     }
   }
 
-  return { status: 500, message: "An unexpected error occurred" };
+  return { status: 500 as StatusCode, message: "An unexpected error occurred" };
 }
 
 // EXAMPLE: successResponse({ userId: 123, username: 'john_doe' })
-export function successResponse(data: any, statusCode: number = 200) {
+export function successResponse(data: any, statusCode?: number) {
   return {
-    statusCode,
+    statusCode: statusCode || 200,
     body: JSON.stringify({ error: false, data }),
   };
 }

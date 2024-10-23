@@ -8,79 +8,86 @@ import {
   getDropdowns,
   updateDropdown,
 } from "../repos/admin-repo";
+import { handleError } from "@/db/utils";
 
 export const admin = new Hono();
 
 admin.get("/dropdowns", async (c) => {
-  return c.json(await getDropdowns());
+  try {
+    return c.json(await getDropdowns());
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
+  }
 });
 
 admin.get("/dropdowns/:id", async (c) => {
-  const id = +c.req.param("id");
-  const dropdown = await getDropdownById(id);
-
-  if (!dropdown) {
-    c.status(404);
-    return c.json({ error: "Dropdown not found" });
+  try {
+    const id = +c.req.param("id");
+    const dropdown = await getDropdownById(id);
+    return c.json(dropdown);
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-
-  return c.json(dropdown);
 });
 
 admin.get("/dropdowns/label/:label", async (c) => {
-  const label = c.req.param("label");
-
-  const dropdown = await getDropdownByLabel(label);
-
-  if (!dropdown) {
-    c.status(404);
-    return c.json({ error: "Dropdown not found" });
+  try {
+    const label = c.req.param("label");
+    const dropdown = await getDropdownByLabel(label);
+    return c.json(dropdown);
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-  return c.json(dropdown);
 });
 
 admin.post("/dropdowns", async (c) => {
-  const { category, options } = await c.req.parseBody();
-
-  const created = await createDropdown(
-    JSON.parse(category as string),
-    JSON.parse(options as string)
-  );
-
-  if (!created) {
-    c.status(500);
-    return c.json({ error: "Failed to create dropdown" });
+  try {
+    const { category, options } = await c.req.parseBody();
+    const created = await createDropdown(
+      JSON.parse(category as string),
+      JSON.parse(options as string)
+    );
+    return c.json(created);
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-
-  return c.json(created);
 });
 
 admin.patch("/dropdowns/:id", async (c) => {
-  const id = +c.req.param("id");
-  const { category, options } = await c.req.parseBody();
+  try {
+    const id = +c.req.param("id");
+    const { category, options } = await c.req.parseBody();
 
-  const updated = await updateDropdown(
-    id,
-    JSON.parse(category as string),
-    JSON.parse(options as string)
-  );
+    const updated = await updateDropdown(
+      id,
+      JSON.parse(category as string),
+      JSON.parse(options as string)
+    );
 
-  if (!updated) {
-    c.status(500);
-    return c.json({ error: "Failed to update dropdown" });
+    return c.json(updated);
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-
-  return c.json(updated);
 });
 
 admin.delete("/dropdowns/:id", async (c) => {
-  const id = +c.req.param("id");
-
-  const deleted = await deleteDropdown(id);
-  if (!deleted) {
-    c.status(500);
-    return c.json({ error: "Failed to delete dropdown" });
+  try {
+    const id = +c.req.param("id");
+    const deleted = await deleteDropdown(id);
+    return c.json(deleted);
+  } catch (error) {
+    const result = handleError(error);
+    c.status(result.status);
+    return c.json(result.message);
   }
-
-  return c.json(deleted);
 });
