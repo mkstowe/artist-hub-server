@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { handleError } from "../db/utils";
 import {
   createArtist,
   createArtistEvent,
@@ -10,7 +11,6 @@ import {
   deleteArtistGalleryImage,
   deleteArtistLink,
   deleteArtistTag,
-  getArtists,
   getArtistAvatar,
   getArtistById,
   getArtistEventById,
@@ -18,6 +18,7 @@ import {
   getArtistGallery,
   getArtistGalleryImage,
   getArtistProfile,
+  getArtists,
   getArtistTagById,
   getArtistTags,
   updateArtist,
@@ -27,7 +28,6 @@ import {
   updateArtistLink,
   updateArtistValidation,
 } from "../repos/artists-repo";
-import { handleError, NotFoundError } from "../db/utils";
 
 export const artists = new Hono();
 
@@ -68,9 +68,13 @@ artists.get("/:id/full", async (c) => {
 
 artists.post("/", async (c) => {
   try {
-    const artist = await createArtist(await c.req.json());
+    const { artist, links } = await c.req.parseBody();
+    const newArtist = await createArtist(
+      JSON.parse(artist as string),
+      JSON.parse(links as string)
+    );
     c.status(201);
-    return c.json(artist);
+    return c.json(newArtist);
   } catch (error) {
     const result = handleError(error);
     c.status(result.status);
@@ -81,7 +85,12 @@ artists.post("/", async (c) => {
 artists.patch("/:id", async (c) => {
   try {
     const id = +c.req.param("id");
-    const updatedArtist = updateArtist(id, await c.req.json());
+    const { artist, links } = await c.req.parseBody();
+    const updatedArtist = updateArtist(
+      id,
+      JSON.parse(artist as string),
+      JSON.parse(links as string)
+    );
     return c.json(updatedArtist);
   } catch (error) {
     const result = handleError(error);

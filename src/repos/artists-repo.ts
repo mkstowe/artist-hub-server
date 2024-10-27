@@ -87,33 +87,71 @@ export async function updateArtistAvatar(id: number | ArtistId, data: any) {
   );
 }
 
-export async function createArtist(input: NewArtist) {
-  const newArtist = await db
-    .insertInto("artist")
-    .values(input)
-    .returningAll()
-    .executeTakeFirstOrThrow();
+export async function createArtist(
+  input: NewArtist,
+  links: Partial<NewArtistLink>[]
+) {
+  let newArtistId: number | undefined;
+  await db.transaction().execute(async (trx) => {
+    const newArtist = await db
+      .insertInto("artist")
+      .values(input)
+      .returningAll()
+      .executeTakeFirstOrThrow();
 
-  return await getArtistById(newArtist.id);
+    newArtistId = newArtist.id;
+    await Promise.all(
+      links.map(async (l) => {
+        l.artist = newArtist.id;
+        await trx
+          .insertInto("artist_link")
+          .values(l as NewArtistLink)
+          .executeTakeFirstOrThrow();
+      })
+    );
+  });
+
+  return await getArtistProfile(newArtistId as ArtistId);
 }
 
-export async function updateArtist(id: number | ArtistId, input: ArtistUpdate) {
-  await getArtistById(id);
-
+export async function updateArtist(
+  id: number | ArtistId,
+  input: ArtistUpdate,
+  links: Partial<NewArtistLink>[]
+) {
+  const existingArtist = await getArtistById(id);
   input.updated_at = new Date();
 
-  const updatedArtist = await db
-    .updateTable("artist")
-    .set(input)
-    .where("id", "=", id as ArtistId)
-    .returningAll()
-    .executeTakeFirst();
+  await db.transaction().execute(async (trx) => {
+    const updatedArtist = await db
+      .updateTable("artist")
+      .set(input)
+      .where("id", "=", id as ArtistId)
+      .returningAll()
+      .executeTakeFirst();
 
-  if (!updatedArtist) {
-    throw new Error("Error updating artist");
-  }
+    if (!updatedArtist) {
+      throw new Error("Error updating artist");
+    }
 
-  return getArtistById(updatedArtist.id);
+    await db
+      .deleteFrom("artist_link")
+      .where("artist", "=", existingArtist.id)
+      .execute();
+
+    await Promise.all(
+      links.map(async (l) => {
+        l.artist = updatedArtist.id;
+
+        await trx
+          .insertInto("artist_link")
+          .values(l as NewArtistLink)
+          .execute();
+      })
+    );
+  });
+
+  return getArtistProfile(existingArtist.id);
 }
 
 export async function deleteArtist(id: number | ArtistId) {
@@ -205,12 +243,12 @@ export async function updateArtistLink(
     .where("id", "=", id as ArtistLinkId)
     .returningAll()
     .executeTakeFirst();
-    
-    if (!created) {
-      throw new Error("Error creating artist link")
-    }
-    
-    return created;
+
+  if (!created) {
+    throw new Error("Error creating artist link");
+  }
+
+  return created;
 }
 
 export async function deleteArtistLink(id: number | ArtistLinkId) {
