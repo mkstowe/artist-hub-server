@@ -1,46 +1,57 @@
+import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres";
+import { v4 as uuid } from "uuid";
 import { db } from "../db";
 import { ArtistId, ArtistUpdate, NewArtist } from "../db/schema/public/Artist";
-import { jsonArrayFrom } from "kysely/helpers/postgres";
-import {
-  deleteImage,
-  errorResponse,
-  getImage,
-  handleError,
-  NotFoundError,
-  updateImage,
-} from "../db/utils";
-import { v4 as uuid } from "uuid";
-import {
-  ArtistLinkId,
-  ArtistLinkUpdate,
-  NewArtistLink,
-} from "../db/schema/public/ArtistLink";
 import {
   ArtistEventId,
   ArtistEventUpdate,
   NewArtistEvent,
 } from "../db/schema/public/ArtistEvent";
-import { ArtistTagId, NewArtistTag } from "../db/schema/public/ArtistTag";
 import {
-  GalleryImageId,
-  GalleryImageUpdate,
-} from "../db/schema/public/GalleryImage";
+  ArtistLinkId,
+  ArtistLinkUpdate,
+  NewArtistLink,
+} from "../db/schema/public/ArtistLink";
+import { ArtistTagId, NewArtistTag } from "../db/schema/public/ArtistTag";
 import {
   ArtistValidationId,
   ArtistValidationUpdate,
   NewArtistValidation,
 } from "../db/schema/public/ArtistValidation";
+import { GalleryImageId } from "../db/schema/public/GalleryImage";
+import { deleteImage, getImage, NotFoundError, updateImage } from "../db/utils";
 import { getUserById } from "./users-repo";
-import { number } from "zod";
 
 export async function getArtists() {
-  return await db.selectFrom("artist").selectAll().execute();
+  return await db
+    .selectFrom("artist as a")
+    .selectAll()
+    .select((eb) => [
+      "id",
+      jsonObjectFrom(
+        eb
+          .selectFrom("dropdown_option as o")
+          .selectAll()
+          .whereRef("a.category", "=", "o.id")
+      ).as("category_object"),
+    ])
+    .execute();
 }
 
 export async function getArtistById(id: number | ArtistId) {
   const artist = await db
-    .selectFrom("artist")
+    .selectFrom("artist as a")
     .selectAll()
+    .select((eb) => [
+      "id",
+      jsonObjectFrom(
+        eb
+          .selectFrom("dropdown_option as o")
+          .selectAll()
+          .whereRef("a.category", "=", "o.id")
+      ).as("category_object"),
+    ])
+
     .where("id", "=", id as ArtistId)
     .executeTakeFirst();
 
@@ -194,6 +205,15 @@ export async function getArtistProfile(id: number | ArtistId) {
           .selectAll()
           .whereRef("i.artist", "=", "a.id")
       ).as("images"),
+    ])
+    .select((eb) => [
+      "id",
+      jsonObjectFrom(
+        eb
+          .selectFrom("dropdown_option as o")
+          .selectAll()
+          .whereRef("a.category", "=", "o.id")
+      ).as("category_object"),
     ])
     .where("a.id", "=", id as ArtistId)
     .executeTakeFirst();

@@ -129,7 +129,7 @@ export async function generateArtists(iterations: number) {
       user: getRandomElement(users).id,
       name: faker.company.name(),
       avatar_path: getRandomElement(artistAvatarPaths),
-      bio: faker.company.catchPhrase(),
+      bio: faker.word.words({ count: { min: 3, max: 100 } }) ,
       slug: (faker.color.human() + "-" + faker.animal.type()).replaceAll(
         " ",
         "-"
